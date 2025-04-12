@@ -1,154 +1,182 @@
-# Creator Matching App 🎯
+# 🎯 Creator Matching App – End-to-End Guide
 
-This is a powerful Streamlit-based application designed to help brands and marketers match their **campaign briefs** with the most relevant **influencers or content creators** using **Large Language Model (LLM)**-based semantic similarity techniques.
+## 📘 Overview
 
-It uses pretrained embeddings from `BAAI/bge-m3` (a top-tier model from Hugging Face) and computes **cosine similarity** between campaign briefs and creator bios to identify the best matches.
+The **Creator Matching App** is a powerful and interactive Streamlit-based tool that connects **campaign briefs** to the most relevant **content creators** by leveraging **state-of-the-art large language models (LLMs)** and **semantic similarity** techniques.
 
----
-
-## 📌 Use Case
-
-Suppose you're a brand looking for creators to promote a new eco-friendly fashion line in India. Instead of manually going through thousands of bios, you simply:
-
-1. Upload your dataset of creators
-2. Enter a brief like: *"Looking for Indian influencers who focus on eco-friendly fashion and modern lifestyle."*
-3. Click **Calculate Embeddings**
-4. The app gives you a ranked list of top-matching creators with similarity scores and filters to narrow your selection.
+It helps marketers, agencies, influencer platforms, and brands to:
+- Automatically evaluate relevance between brief and creator bio
+- Avoid manual screening of hundreds or thousands of profiles
+- Download top matches instantly in CSV format
 
 ---
 
-## 📊 Input Dataset Format
+## 🚀 Key Features
 
-Upload a `.csv` or `.xlsx` file with the following **required columns**:
-
-| Column         | Description                                      |
-|----------------|--------------------------------------------------|
-| `name`         | Creator’s name                                   |
-| `bio`          | Creator’s bio/description                        |
-| `niche`        | Primary content category (e.g., fashion, tech)   |
-| `location`     | Where the creator is based (e.g., Delhi, Mumbai) |
-| `audience_size`| Number of followers or reach estimate            |
-
----
-
-## 🧠 How It Works
-
-### 1. **Embeddings Generation**
-- Creator bios are passed through the `BAAI/bge-m3` embedding model to generate 1024-dimensional vectors.
-- The campaign brief is also embedded with a special prefix recommended by BGE:  
-  `"Represent this sentence for searching relevant passages: "`
-
-### 2. **Similarity Calculation**
-- Cosine similarity is calculated between the campaign brief embedding and each creator bio embedding.
-- These scores are added to the dataframe under the column `similarity_score`.
-
-### 3. **Filtering & Sorting**
-- Use interactive filters in the sidebar to select niche, location, and number of top creators to display.
-- Top results are shown in styled cards with the bio and similarity score.
-
-### 4. **Download**
-- The final list of top matches can be downloaded as a `.csv` file.
+| Feature | Description |
+|--------|-------------|
+| 🧠 Semantic Search | Uses `BAAI/bge-m3` LLM embeddings to understand meaning in campaign briefs and bios |
+| 🔁 Controlled Embedding | Embeddings computed **only** when the user clicks "Calculate Embeddings" |
+| ⚡ Fast Filtering | Sidebar filters by niche, location, and match count |
+| 📥 Download Option | Export top matching creators to CSV |
+| 🧠 Smart Caching | Uses `st.session_state` to prevent recomputation |
+| 💅 Modern UI | Form-based input, styled cards, and dynamic elements |
 
 ---
 
-## 🚀 Features
+## 📂 Required Dataset Format
 
--> Upload Excel or CSV creator datasets  
--> Campaign brief input with interactive submission  
--> Caching of results (no redundant computation)  
--> Styled creator cards with clear similarity scores  
--> Filter by niche and location  
--> Slider to choose number of top matches  
--> Download top results as CSV  
--> Optimized for performance using `@st.cache_resource` and `st.session_state`  
--> Streamlit-compatible with `st.set_page_config` called correctly at top
+Upload your file (`.csv` or `.xlsx`) with these **mandatory columns**:
 
----
+| Column         | Description |
+|----------------|-------------|
+| `name`         | Creator’s full name or handle |
+| `bio`          | A free-text bio, e.g., "Lifestyle & fashion creator | Vegan | 120k Insta fam" |
+| `niche`        | Creator’s category or genre (e.g., beauty, tech, gaming) |
+| `location`     | City, state, or region (e.g., Mumbai, Bangalore) |
+| `audience_size`| A number indicating follower count or audience reach |
 
-## 🧰 Technologies Used
-
-- [Streamlit](https://streamlit.io) – interactive UI
-- [sentence-transformers](https://www.sbert.net/) – semantic embeddings
-- [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) – state-of-the-art multilingual embedding model
-- [PyTorch](https://pytorch.org/) – tensor and similarity operations
-- [pandas](https://pandas.pydata.org/) – data wrangling
+🟡 **Important:** Missing any of these columns will cause the app to stop with a clear error.
 
 ---
 
-## 📦 Installation
+## 💡 How It Works: Step by Step
 
-```bash
-pip install streamlit pandas torch sentence-transformers openpyxl
+### Step 1: Upload File
+You upload a `.csv` or `.xlsx` file containing creator data.
+
+### Step 2: Write Campaign Brief
+You enter a campaign brief like:
+
+```
+Looking for creators in India who specialize in tech reviews, YouTube Shorts, and have more than 50K followers.
 ```
 
-Or from `requirements.txt`:
+### Step 3: Click "Calculate Embeddings"
+- Creator bios are embedded using `BAAI/bge-m3`
+- Campaign brief is embedded using the **recommended prompt**:
+  > Represent this sentence for searching relevant passages: [your brief]
+
+### Step 4: Compute Similarity
+Cosine similarity is calculated between the brief and each bio, resulting in a relevance score (0 to 1) per creator.
+
+### Step 5: Filter & Sort
+In the sidebar, you can:
+- Filter by **niche**
+- Filter by **location**
+- Set how many top matches to show using a slider
+
+### Step 6: View & Download
+Top creators are displayed as styled cards with their similarity score. A download button allows exporting to CSV.
+
+---
+
+## 📦 Installation Instructions
+
+### Step 1: Clone Repo
+
+```bash
+git clone https://github.com/your-org/creator-matching-app.git
+cd creator-matching-app
+```
+
+### Step 2: Install Requirements
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+Or manually:
 
-## ▶️ Run the App
+```bash
+pip install streamlit pandas torch sentence-transformers openpyxl
+```
+
+### Step 3: Run the App
 
 ```bash
 streamlit run creator_identification.py
 ```
 
----
-
-## ✅ Model: BAAI/bge-m3
-
-- Multilingual embedding model optimized for retrieval use cases.
-- Usage follows best practice by adding:  
-  `"Represent this sentence for searching relevant passages: "` to the input prompt.
-- Supports efficient, high-dimensional similarity matching.
+✅ App will open in your browser at: `http://localhost:8501`
 
 ---
 
-## 🧠 Behind the Scenes
+## 📌 Model Used: `BAAI/bge-m3`
 
-- All embeddings are normalized before similarity calculation
-- Cosine similarity scores are used to rank results
-- Embedding is only recalculated when:
-  - The campaign brief changes
-  - A new dataset is uploaded
-  - OR the "🔁 Calculate Embeddings" button is clicked
+- High-performing sentence embedding model from BAAI (Beijing Academy of AI)
+- Trained for multilingual semantic search & retrieval
+- Supports input prompts for improved alignment
+- Output vector: **1024 dimensions**
 
----
-
-## 🖼️ UI Highlights
-
-- Custom button inside form to tightly pair it with brief input
-- Sidebar filters auto-update the visible creator cards
-- Downloadable CSV makes exporting simple
-- All results are cached until changed
-
----
-
-## 🛠️ Example Entry
-
-**Brief:** `Looking for Indian beauty influencers in tier-1 cities who specialize in reels.`  
-**Top Result:**
-
-```json
-{
-  "name": "Aditi Sharma",
-  "niche": "Beauty",
-  "location": "Delhi",
-  "audience_size": 240000,
-  "similarity_score": 0.8941,
-  "bio": "Beauty and lifestyle creator | Everyday glam | Insta reels | PR-friendly | Mumbai | 240k strong fam 💄✨"
-}
+**Embedding Prompt (recommended by BGE):**
+```text
+"Represent this sentence for searching relevant passages: " + [your text]
 ```
 
 ---
 
-## ❤️ Credits
+## ⚙️ Internal Design & Caching
 
-Model powered by Hugging Face, app styled with Streamlit.
+| Component | Purpose |
+|----------|---------|
+| `@st.cache_resource` | Loads the embedding model once and reuses it |
+| `st.session_state` | Stores cached embeddings, dataset hash, and brief |
+| `torch.tensor` + `cos_sim` | Efficient cosine similarity computation |
+| `st.form` | Groups the brief + button UI |
+| `st.download_button` | One-click export of results |
 
+📁 **Hashing** is used to detect if the uploaded file or brief has changed. If not, results are reused.
 
-## 📧 Contact
+---
 
-For questions or suggestions, reach out at: **parasharranjay@gmail.com**
+## 🧪 Example Dataset Entry
+
+```csv
+name,bio,niche,location,audience_size
+Neha Sharma,"Fashion & lifestyle influencer | Vegan recipes | 180k Instagram",Fashion,Mumbai,180000
+Aman Raj,"Tech enthusiast | Gadget reviews | Shorts expert",Tech,Delhi,95000
+```
+
+## 🧠 Example Campaign Brief
+
+```
+Looking for Indian beauty influencers who can create engaging reels around skincare products.
+```
+
+## 📌 Output (Top Match)
+```json
+{
+  "name": "Ananya R.",
+  "niche": "Beauty",
+  "location": "Bangalore",
+  "audience_size": 120000,
+  "similarity_score": 0.932,
+  "bio": "Beauty & skincare reels | Natural products | Based in Bangalore | 120k strong "
+}
+```
+
+---
+## 📎 Files in This Project
+
+| File | Description |
+|------|-------------|
+| `creator_identification.py` | Main Streamlit app |
+| `README.md` | This documentation |
+| `requirements.txt` | Required packages |
+| `creator_df.csv` | (Example dataset if provided) |
+
+---
+
+## 🧠 Why LLM-Based Matching Works
+
+- LLMs can detect **semantic overlap** beyond keyword matching
+- They handle synonyms, structure, and even *intent*
+- Great for sparse bios or brief phrasing differences
+
+**Examples:**  
+`eco-conscious` ≈ `sustainable`  
+`beauty influencer` ≈ `skincare creator`  
+`short videos` ≈ `reels`, `shorts`, `YouTube Shorts`
+
+---
