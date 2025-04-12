@@ -15,7 +15,7 @@ It helps marketers, agencies, influencer platforms, and brands to:
 
 | Feature | Description |
 |--------|-------------|
-| 🧠 Semantic Search | Uses `BAAI/bge-m3` LLM embeddings to understand meaning in campaign briefs and bios |
+| 🧠 Semantic Search | Uses `BAAI/bge-m3` LLM embeddings to understand meaning in campaign briefs and bios(Does not require API key) |
 | 🔁 Controlled Embedding | Embeddings computed **only** when the user clicks "Calculate Embeddings" |
 | ⚡ Fast Filtering | Sidebar filters by niche, location, and match count |
 | 📥 Download Option | Export top matching creators to CSV |
