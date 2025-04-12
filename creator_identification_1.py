@@ -1,32 +1,13 @@
 import streamlit as st
+st.set_page_config(page_title="Creator Matching App", layout="wide")  # Must be called first!
+
 import pandas as pd
 import torch
 import hashlib
 from sentence_transformers import SentenceTransformer, util
 
 # ------------------
-# Custom CSS for a Colorful Button
-# ------------------
-st.markdown("""
-    <style>
-    div.stButton > button {
-        background-color: #4CAF50;
-        color: white;
-        font-size: 18px;
-        height: 3em;
-        width: 100%;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-    div.stButton > button:hover {
-        background-color: #45a049;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# ------------------
-# Caching & Model Loading
+# Caching & Model
 # ------------------
 @st.cache_resource(show_spinner=False)
 def load_model():
@@ -80,34 +61,32 @@ def embed_and_score(creators_df, campaign_brief, model):
     Embed the creator bios and the campaign brief, then compute cosine similarity.
     Returns a DataFrame with similarity scores.
     """
-    # Embed creator bios
+    # Embed creator bios (convert embeddings to list of lists)
     bio_texts = creators_df["bio"].tolist()
     bio_embeddings = model.encode(bio_texts, convert_to_tensor=False, normalize_embeddings=True)
     creators_df = creators_df.copy()
-    # Convert to list of lists for storage in DataFrame
     creators_df["bio_embedding"] = bio_embeddings.tolist()
     
-    # Embed campaign brief with the recommended prefix for search queries.
+    # Embed campaign brief with the recommended prompt.
     query = "Represent this sentence for searching relevant passages: " + campaign_brief
     query_embedding = model.encode(query, convert_to_tensor=True, normalize_embeddings=True)
     
-    # Compute cosine similarity between query and creator bio embeddings
+    # Compute cosine similarity between query and creator bios
     device = query_embedding.device
     creator_embeddings_tensor = torch.tensor(bio_embeddings, device=device)
     similarities = util.cos_sim(query_embedding, creator_embeddings_tensor)[0].cpu().numpy()
     creators_df["similarity_score"] = similarities
     
-    # Remove embeddings from final output and return the DataFrame with similarity scores.
+    # Remove embeddings before returning
     return creators_df.drop(columns=["bio_embedding"])
 
 # -------------------------------
-# Main Streamlit App – Creator Matching
+# Streamlit App – Creator Matching
 # -------------------------------
-st.set_page_config(page_title="Creator Matching App", layout="wide")
 st.title("🔍 Creator Matching App")
 st.markdown("### Upload your creator dataset (CSV or Excel format)")
 
-# File uploader: only proceed if a file is provided.
+# File uploader – wait until a file is provided.
 uploaded_file = st.file_uploader("📁 Upload your creator dataset", type=["csv", "xlsx"])
 if uploaded_file is None:
     st.info("Please upload your dataset to get started.")
@@ -140,10 +119,11 @@ if campaign_brief.strip() == "":
 st.markdown("### Calculate Embeddings")
 calc_button = st.button("🔁 Calculate Embeddings")
 
-# Create a unique cache key based on the file content and the campaign brief.
+# Generate a cache key from file content and campaign brief.
 file_hash = hashlib.sha256(uploaded_file.getvalue()).hexdigest()
 brief = campaign_brief.strip()
 
+# If the button is clicked or cache is missing/invalid, compute embeddings.
 if calc_button or ("scored_df" not in st.session_state or st.session_state.get("last_file_hash") != file_hash or st.session_state.get("last_brief") != brief):
     with st.spinner("Embedding campaign brief and calculating similarity..."):
         try:
@@ -157,7 +137,7 @@ if calc_button or ("scored_df" not in st.session_state or st.session_state.get("
             st.stop()
 else:
     scored_df = st.session_state.scored_df
-    st.info("✅ Using cached embedding results.")
+    st.info("✅ Using cached embedding results. Click 'Calculate Embeddings' to refresh.")
 
 # -------------------------------
 # Step 4: Sidebar Filters and Top Match Count
