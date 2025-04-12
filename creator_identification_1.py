@@ -1,10 +1,13 @@
 import streamlit as st
-st.set_page_config(page_title="Creator Matching App", layout="wide")  # Must be called first!
-
 import pandas as pd
 import torch
 import hashlib
 from sentence_transformers import SentenceTransformer, util
+
+# ------------------
+# Set Page Config – Must be the first Streamlit command!
+# ------------------
+st.set_page_config(page_title="Creator Matching App", layout="wide")
 
 # ------------------
 # Caching & Model
@@ -61,7 +64,7 @@ def embed_and_score(creators_df, campaign_brief, model):
     Embed the creator bios and the campaign brief, then compute cosine similarity.
     Returns a DataFrame with similarity scores.
     """
-    # Embed creator bios (convert embeddings to list of lists)
+    # Embed creator bios
     bio_texts = creators_df["bio"].tolist()
     bio_embeddings = model.encode(bio_texts, convert_to_tensor=False, normalize_embeddings=True)
     creators_df = creators_df.copy()
@@ -71,22 +74,21 @@ def embed_and_score(creators_df, campaign_brief, model):
     query = "Represent this sentence for searching relevant passages: " + campaign_brief
     query_embedding = model.encode(query, convert_to_tensor=True, normalize_embeddings=True)
     
-    # Compute cosine similarity between query and creator bios
+    # Compute cosine similarity
     device = query_embedding.device
     creator_embeddings_tensor = torch.tensor(bio_embeddings, device=device)
     similarities = util.cos_sim(query_embedding, creator_embeddings_tensor)[0].cpu().numpy()
     creators_df["similarity_score"] = similarities
     
-    # Remove embeddings before returning
     return creators_df.drop(columns=["bio_embedding"])
 
 # -------------------------------
-# Streamlit App – Creator Matching
+# Main Streamlit App – Creator Matching
 # -------------------------------
 st.title("🔍 Creator Matching App")
 st.markdown("### Upload your creator dataset (CSV or Excel format)")
 
-# File uploader – wait until a file is provided.
+# File uploader – only proceed if a file is provided.
 uploaded_file = st.file_uploader("📁 Upload your creator dataset", type=["csv", "xlsx"])
 if uploaded_file is None:
     st.info("Please upload your dataset to get started.")
@@ -105,26 +107,25 @@ except Exception as e:
     st.stop()
 
 # -------------------------------
-# Step 2: Campaign Brief Input
+# Step 2: Campaign Brief Input within a Form
 # -------------------------------
-st.markdown("### Enter your campaign brief below:")
-campaign_brief = st.text_area("Campaign Brief", placeholder="e.g. Looking for Indian influencers who focus on eco-friendly fashion and modern lifestyle.")
+st.markdown("### Enter your campaign brief and then click 'Calculate Embeddings'")
+with st.form("embedding_form"):
+    campaign_brief = st.text_area("Campaign Brief", placeholder="e.g. Looking for Indian influencers who focus on eco-friendly fashion and modern lifestyle.")
+    submit_button = st.form_submit_button("🔁 Calculate Embeddings")
+
 if campaign_brief.strip() == "":
     st.info("Please enter a campaign brief to find matches.")
     st.stop()
 
 # -------------------------------
-# Step 3: Calculate Embeddings Button
+# Step 3: Compute Embeddings (when form is submitted or cache is not valid)
 # -------------------------------
-st.markdown("### Calculate Embeddings")
-calc_button = st.button("🔁 Calculate Embeddings")
-
-# Generate a cache key from file content and campaign brief.
+# Create a unique cache key from file content and campaign brief.
 file_hash = hashlib.sha256(uploaded_file.getvalue()).hexdigest()
 brief = campaign_brief.strip()
 
-# If the button is clicked or cache is missing/invalid, compute embeddings.
-if calc_button or ("scored_df" not in st.session_state or st.session_state.get("last_file_hash") != file_hash or st.session_state.get("last_brief") != brief):
+if submit_button or ("scored_df" not in st.session_state or st.session_state.get("last_file_hash") != file_hash or st.session_state.get("last_brief") != brief):
     with st.spinner("Embedding campaign brief and calculating similarity..."):
         try:
             model = load_model()
